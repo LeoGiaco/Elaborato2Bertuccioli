@@ -1,6 +1,6 @@
 #include "load_meshes_assimp.hpp"
 
-bool loadAssImp(const char *path, vector<Shape3D> &meshVector)
+bool loadAssImp(const char *path, GLProgram *program, vector<Shape3D *> &meshVector)
 {
 
 	Assimp::Importer importer;
@@ -22,6 +22,12 @@ bool loadAssImp(const char *path, vector<Shape3D> &meshVector)
 	{
 		// Per ogni mesh dell'oggetto
 		mesh = scene->mMeshes[nm];
+
+		vector<vec3> vertices;
+		vector<vec4> colors;
+		vector<vec2> texCoords;
+		vector<vec3> normals;
+		vector<uint> indices;
 		aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
 
 		aiColor3D color;
@@ -40,31 +46,30 @@ bool loadAssImp(const char *path, vector<Shape3D> &meshVector)
 
 		if (aiReturn_SUCCESS == material->Get(AI_MATKEY_COLOR_DIFFUSE, color))
 		{
-			meshVector[nm].materiale.diffuse = glm::vec3(color.r, color.g, color.b);
+			mat.diffuse = glm::vec3(color.r, color.g, color.b);
 		}
 		else
 		{
-			meshVector[nm].materiale.diffuse = glm::vec3(1.0, 0.2, 0.1);
+			mat.diffuse = glm::vec3(1.0, 0.2, 0.1);
 		}
 
 		if (aiReturn_SUCCESS == material->Get(AI_MATKEY_COLOR_SPECULAR, color))
 		{
-			meshVector[nm].materiale.specular = glm::vec3(color.r, color.g, color.b);
+			mat.specular = glm::vec3(color.r, color.g, color.b);
 		}
-
 		else
 		{
 			printf("Errore in specular \n");
-			meshVector[nm].materiale.specular = glm::vec3(0.5, 0.5, 0.5);
+			mat.specular = glm::vec3(0.5, 0.5, 0.5);
 		}
 		if (aiReturn_SUCCESS == material->Get(AI_MATKEY_SHININESS_STRENGTH, value))
 		{
-			meshVector[nm].materiale.shininess = value;
+			mat.shininess = value;
 		}
 		else
 		{
 			// printf("Errore in shininess \n");
-			meshVector[nm].materiale.shininess = 50.0f;
+			mat.shininess = 50.0f;
 		}
 
 		// �http://assimp.sourceforge.net/lib_html/structai_material.html
@@ -73,15 +78,15 @@ bool loadAssImp(const char *path, vector<Shape3D> &meshVector)
 		{
 
 			aiVector3D pos = mesh->mVertices[i];
-			meshVector[nm].vertici.push_back(glm::vec3(pos.x, pos.y, pos.z));
+			vertices.push_back(glm::vec3(pos.x, pos.y, pos.z));
 		}
 
 		// Fill vertices texture coordinates
 
 		for (unsigned int i = 0; i < mesh->mNumVertices; i++)
 		{
-			meshVector[nm].texCoords.push_back(glm::vec2(0.0, 0.0));
-			meshVector[nm].colori.push_back(vec4(1.0, 0.0, 0.0, 1.0));
+			texCoords.push_back(glm::vec2(0.0, 0.0));
+			colors.push_back(vec4(1.0, 0.0, 0.0, 1.0));
 		}
 
 		// Fill vertices normals
@@ -89,7 +94,7 @@ bool loadAssImp(const char *path, vector<Shape3D> &meshVector)
 		for (unsigned int i = 0; i < mesh->mNumVertices; i++)
 		{
 			aiVector3D n = mesh->mNormals[i];
-			meshVector[nm].normali.push_back(glm::vec3(n.x, n.y, n.z));
+			normals.push_back(glm::vec3(n.x, n.y, n.z));
 		}
 
 		// Fill face indices
@@ -97,10 +102,12 @@ bool loadAssImp(const char *path, vector<Shape3D> &meshVector)
 		for (unsigned int i = 0; i < mesh->mNumFaces; i++)
 		{
 			// Assume the model has only triangles.
-			meshVector[nm].indici.push_back(mesh->mFaces[i].mIndices[0]);
-			meshVector[nm].indici.push_back(mesh->mFaces[i].mIndices[1]);
-			meshVector[nm].indici.push_back(mesh->mFaces[i].mIndices[2]);
+			indices.push_back(mesh->mFaces[i].mIndices[0]);
+			indices.push_back(mesh->mFaces[i].mIndices[1]);
+			indices.push_back(mesh->mFaces[i].mIndices[2]);
 		}
+
+		meshVector.push_back(Mesh::create(program, vertices, normals, indices, mat, GL_TRIANGLES));
 	}
 	return true;
 }

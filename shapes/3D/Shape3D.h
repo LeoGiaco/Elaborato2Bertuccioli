@@ -14,10 +14,12 @@ protected:
     GLuint VAO;
     GLuint VBO_vertices;
     GLuint VBO_normals;
+    GLuint VBO_texCoords;
     GLuint EBO_indices;
 
     vector<vec3> vertices = vector<vec3>();
     vector<vec3> normals = vector<vec3>();
+    vector<vec2> texCoords = vector<vec2>();
     vector<GLuint> indices = vector<GLuint>();
 
     quat rotation = quat(0, 0, 0, 1);
@@ -31,7 +33,7 @@ protected:
 
     virtual void sendUniformValues();
 
-    Shape3D(GLProgram *program, vector<vec3> vertices, vector<vec3> normals, vector<GLuint> indices, Material mat, GLenum drawMode, bool doDynamicDraw = false);
+    Shape3D(GLProgram *program, vector<vec3> vertices, vector<vec3> normals, vector<GLuint> indices, vector<vec2> texCoords, Material mat, GLenum drawMode, bool doDynamicDraw = false);
 
 public:
     Material getMaterial();
@@ -71,7 +73,7 @@ public:
     // The vector contains (xMin, yMin, zMin) and (xMax, yMax, zMax).
     virtual vector<vec3> getBoxCollider();
 
-    static Shape3D *create(GLProgram *program, vector<vec3> vertices, vector<vec3> normals, vector<GLuint> indices, Material mat, GLenum drawMode, bool doDynamicDraw = false);
+    static Shape3D *create(GLProgram *program, vector<vec3> vertices, vector<vec3> normals, vector<GLuint> indices, vector<vec2> texCoords, Material mat, GLenum drawMode, bool doDynamicDraw = false);
 
     static Shape3D *cube(GLProgram *program, Material mat, uint resolution);
 

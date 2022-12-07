@@ -1,7 +1,7 @@
 #include "Shape3D.h"
 #include <iostream>
 
-Shape3D::Shape3D(GLProgram *program, vector<vec3> vertices, vector<vec3> normals, vector<GLuint> indices, Material mat, GLenum drawMode, bool doDynamicDraw)
+Shape3D::Shape3D(GLProgram *program, vector<vec3> vertices, vector<vec3> normals, vector<GLuint> indices, vector<vec2> texCoords, Material mat, GLenum drawMode, bool doDynamicDraw)
     : ShapeBase(drawMode, doDynamicDraw), HasShader(program), HasCollider()
 {
     setMaterial(mat);
@@ -9,6 +9,7 @@ Shape3D::Shape3D(GLProgram *program, vector<vec3> vertices, vector<vec3> normals
     this->vertices.assign(vertices.begin(), vertices.end());
     this->normals.assign(normals.begin(), normals.end());
     this->indices.assign(indices.begin(), indices.end());
+    this->texCoords.assign(texCoords.begin(), texCoords.end());
 }
 
 void Shape3D::initShape()
@@ -33,6 +34,14 @@ void Shape3D::initShape()
 
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
     glEnableVertexAttribArray(1);
+
+    // VBO texture coords.
+    glGenBuffers(1, &(this->VBO_texCoords));
+    glBindBuffer(GL_ARRAY_BUFFER, this->VBO_texCoords);
+    glBufferData(GL_ARRAY_BUFFER, this->texCoords.size() * sizeof(vec3), this->texCoords.data(), draw_type);
+
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void *)0);
+    glEnableVertexAttribArray(2);
 
     // EBO indices.
     glGenBuffers(1, &(this->EBO_indices));
@@ -200,9 +209,9 @@ void Shape3D::sendUniformValues()
     GLProgramInstance::sendUniformValues(&(this->uniformValues), program->getProgram(shapeShaders));
 }
 
-Shape3D *Shape3D::create(GLProgram *program, vector<vec3> vertices, vector<vec3> normals, vector<GLuint> indices, Material mat, GLenum drawMode, bool doDynamicDraw)
+Shape3D *Shape3D::create(GLProgram *program, vector<vec3> vertices, vector<vec3> normals, vector<GLuint> indices, vector<vec2> texCoords, Material mat, GLenum drawMode, bool doDynamicDraw)
 {
-    Shape3D *shape = new Shape3D(program, vertices, normals, indices, mat, drawMode, doDynamicDraw);
+    Shape3D *shape = new Shape3D(program, vertices, normals, indices, texCoords, mat, drawMode, doDynamicDraw);
 
     shape->initShape();
 
@@ -350,7 +359,7 @@ Shape3D *Shape3D::cube(GLProgram *program, Material mat, uint resolution)
         cube_face(Face(i), resolution, &vertices, &normals, &indices);
     }
 
-    return Shape3D::create(program, vertices, normals, indices, mat, GL_TRIANGLES);
+    return Shape3D::create(program, vertices, normals, indices, vector<vec2>(), mat, GL_TRIANGLES);
 }
 
 pair<bool, size_t> find_index(vector<pair<vec3, size_t>> *vect, vec3 v)
@@ -461,7 +470,7 @@ Shape3D *Shape3D::sphere(GLProgram *program, Material mat, uint resolution)
         sphere_face(Face(i), resolution, &vertices, &edgeVertices, &normals, &indices);
     }
 
-    return Shape3D::create(program, vertices, normals, indices, mat, GL_TRIANGLES);
+    return Shape3D::create(program, vertices, normals, indices, vector<vec2>(), mat, GL_TRIANGLES);
 }
 
 Shape3D *Shape3D::sphere_noisy(GLProgram *program, Material mat, uint resolution, vector<NoiseSettings> settings, SimpleNoiseFilter filter)
@@ -513,5 +522,5 @@ Shape3D *Shape3D::sphere_noisy(GLProgram *program, Material mat, uint resolution
         normals[i] = normalize(normals[i] / (float)(normalSums[i]));
     }
 
-    return Shape3D::create(program, vertices, normals, indices, mat, GL_TRIANGLES);
+    return Shape3D::create(program, vertices, normals, indices, vector<vec2>(), mat, GL_TRIANGLES);
 }

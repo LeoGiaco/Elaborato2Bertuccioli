@@ -58,6 +58,7 @@ uniform vec3 viewPos;
 
 struct Material 
 {
+	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
 	float shininess;
@@ -84,7 +85,7 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
     	spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
 	}
     // combine results
-    vec3 ambient = light.ambient * material.diffuse;
+    vec3 ambient = light.ambient * material.ambient;
     vec3 diffuse = light.diffuse * (diff * material.diffuse);
     vec3 specular = light.specular * (spec * material.specular);
     return (ambient + diffuse + specular);
@@ -112,7 +113,7 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 	float attenuation = 1.0 / (light.constant + light.linear * distance +
 		light.quadratic * (distance * distance));
 	// Combine results.
-	vec3 ambient = light.ambient * material.diffuse;
+	vec3 ambient = light.ambient * material.ambient;
 	vec3 diffuse = light.diffuse * (diff * material.diffuse);
 	vec3 specular = light.specular * (spec * material.specular);
 
@@ -144,7 +145,7 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 	float attenuation = light.power / (light.constant + light.linear * dist +		// Attenuation (light's decrease of energy).
 		light.quadratic * (dist * dist));
 
-	vec3 ambient = light.ambient * material.diffuse;  		// Ambient light (light always present).
+	vec3 ambient = light.ambient * material.ambient;  		// Ambient light (light always present).
 	vec3 diffuse = light.diffuse * (diff * material.diffuse);	                        // Diffuse light (light bouncing back with partial strength).
 	vec3 specular = light.specular * (spec * material.specular);	                    // Specular light (light bouncing back full strength).
 
@@ -167,7 +168,7 @@ void main()
 	{
 		if (cartoon == 1)
 		{
-  			float intensity = max(0.0, dot(normalize(-dirLight.direction), normalV));
+  			float intensity = max(0.2, dot(normalize(-dirLight.direction), normalV));
   			intensity = intensity - mod(intensity, 1.0 / shades);
 
 			result = material.diffuse * (vec3(1.0) * intensity);
@@ -181,7 +182,7 @@ void main()
 	{
 		if (cartoon == 1)
 		{
-  			float intensity = max(0.0, dot(normalize(pos.xyz - pointLight.position), normalV));
+  			float intensity = max(0.2, dot(normalize(pos.xyz - pointLight.position), normalV));
   			intensity = intensity - mod(intensity, 1.0 / shades);
 
 			result = material.diffuse * (vec3(1.0) * intensity);

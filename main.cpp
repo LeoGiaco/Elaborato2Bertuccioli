@@ -171,22 +171,26 @@ void keyDown(unsigned char key, int x, int y)
     case 's':
         terrainMesh->setShaderProgram(shaderFragment ? "default" : "interp");
         ocean->setShaderProgram(shaderFragment ? "default" : "interp");
+        minicube->setShaderProgram(shaderFragment ? "default" : "interp");
 
         shaderFragment = !shaderFragment;
         break;
     case 'l':
         terrainMesh->setUniformValue(ValueType::V_INT, "useDirLight", Value<int>::of(useDirLight));
         ocean->setUniformValue(ValueType::V_INT, "useDirLight", Value<int>::of(useDirLight));
+        minicube->setUniformValue(ValueType::V_INT, "useDirLight", Value<int>::of(useDirLight));
         useDirLight = 1 - useDirLight;
         break;
     case 'b':
         terrainMesh->setUniformValue(ValueType::V_INT, "blinn", Value<int>::of(blinn));
         ocean->setUniformValue(ValueType::V_INT, "blinn", Value<int>::of(blinn));
+        minicube->setUniformValue(ValueType::V_INT, "blinn", Value<int>::of(blinn));
         blinn = 1 - blinn;
         break;
     case 'c':
         terrainMesh->setUniformValue(ValueType::V_INT, "cartoon", Value<int>::of(cartoon));
         ocean->setUniformValue(ValueType::V_INT, "cartoon", Value<int>::of(cartoon));
+        minicube->setUniformValue(ValueType::V_INT, "cartoon", Value<int>::of(cartoon));
 
         cartoon = 1 - cartoon;
         break;
@@ -194,12 +198,14 @@ void keyDown(unsigned char key, int x, int y)
         shades++;
         terrainMesh->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(shades));
         ocean->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(shades));
+        minicube->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(shades));
         break;
     case '-':
         if (shades > 2)
             shades--;
         terrainMesh->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(shades));
         ocean->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(shades));
+        minicube->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(shades));
         break;
 
     default:
@@ -237,6 +243,7 @@ void createShapes()
     scene.addShape(lightSphere);
 
     Material mat1;
+    mat1.ambient = vec4(0.0f, 0.4f, 0.0f, 1);
     mat1.diffuse = vec4(0.0f, 0.4f, 0.0f, 1);
     mat1.specular = vec4(0.9f, 0.9f, 0.9f, 1);
     mat1.shininess = 20;
@@ -251,9 +258,6 @@ void createShapes()
     terrainMesh = terrain->getMesh();
     terrainMesh->setPosition(0, 0, 0);
     terrainMesh->setShaderProgram("default");
-    terrainMesh->setUniformValue(ValueType::V_VEC3, "material.diffuse", Value<vec3>::of(mat1.diffuse));
-    terrainMesh->setUniformValue(ValueType::V_VEC3, "material.specular", Value<vec3>::of(mat1.specular));
-    terrainMesh->setUniformValue(ValueType::V_FLOAT, "material.shininess", Value<float>::of(mat1.shininess));
 
     terrainMesh->setUniformValue(ValueType::V_INT, "useDirLight", Value<int>::of(0));
     terrainMesh->setUniformValue(ValueType::V_VEC3, "dirLight.direction", Value<vec3>::of(dirLight.direction));
@@ -276,16 +280,14 @@ void createShapes()
     scene.addShape(terrainMesh);
 
     Material mat2;
+    mat2.ambient = vec4(0.0, 0, 0.6, 1);
     mat2.diffuse = vec4(0.0, 0, 0.6, 1);
     mat2.specular = vec4(0.9, 0.7, 0.7, 1);
     mat2.shininess = 24;
 
-    ocean = Mesh::sphere(&program, mat1, 16);
+    ocean = Mesh::sphere(&program, mat2, 16);
     ocean->setPosition(0, 0, 0);
     ocean->setShaderProgram("default");
-    ocean->setUniformValue(ValueType::V_VEC3, "material.diffuse", Value<vec3>::of(mat2.diffuse));
-    ocean->setUniformValue(ValueType::V_VEC3, "material.specular", Value<vec3>::of(mat2.specular));
-    ocean->setUniformValue(ValueType::V_FLOAT, "material.shininess", Value<float>::of(mat2.shininess));
 
     ocean->setUniformValue(ValueType::V_INT, "useDirLight", Value<int>::of(0));
     ocean->setUniformValue(ValueType::V_VEC3, "dirLight.direction", Value<vec3>::of(dirLight.direction));
@@ -306,14 +308,35 @@ void createShapes()
     // ocean->drawWireframe(true);
     scene.addShape(ocean);
 
-    minicube = Mesh::cube(&program, matEmpty, 2);
+    Material mat3;
+    mat3.ambient = vec4(0.8f, 0.8f, 0.8f, 1);
+    mat3.diffuse = vec4(0.8f, 0.8f, 0.8f, 1);
+    mat3.specular = vec4(1, 1, 1, 1);
+    mat3.shininess = 32;
+    minicube = Mesh::sphere(&program, mat3, 8);
     minicube->setAnchorPosition(0, 0, 0);
     minicube->setPosition(1, 0, 0);
     minicube->rotateAroundAnchor(vec3(1, 0, 0), radians(90.0f));
     // minicube->rotateAroundAnchor(vec3(1, 0, 0), radians(45.0f));
     minicube->setScale(0.05);
-    minicube->setShaderProgram("simple");
-    minicube->setUniformValue(ValueType::V_VEC4, "color", Value<vec4>::of(vec4(1, 1, 1, 1)));
+    minicube->setShaderProgram("default");
+
+    minicube->setUniformValue(ValueType::V_INT, "useDirLight", Value<int>::of(0));
+    minicube->setUniformValue(ValueType::V_VEC3, "dirLight.direction", Value<vec3>::of(dirLight.direction));
+    minicube->setUniformValue(ValueType::V_VEC3, "dirLight.ambient", Value<vec3>::of(dirLight.ambient));
+    minicube->setUniformValue(ValueType::V_VEC3, "dirLight.diffuse", Value<vec3>::of(dirLight.diffuse));
+    minicube->setUniformValue(ValueType::V_VEC3, "dirLight.specular", Value<vec3>::of(dirLight.specular));
+
+    minicube->setUniformValue(ValueType::V_INT, "blinn", Value<int>::of(0));
+    minicube->setUniformValue(ValueType::V_INT, "cartoon", Value<int>::of(0));
+    minicube->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(5));
+    minicube->setUniformValue(ValueType::V_VEC3, "pointLight.position", Value<vec3>::of(pointLight.position));
+    minicube->setUniformValue(ValueType::V_VEC3, "pointLight.ambient", Value<vec3>::of(pointLight.ambient));
+    minicube->setUniformValue(ValueType::V_VEC3, "pointLight.diffuse", Value<vec3>::of(pointLight.diffuse));
+    minicube->setUniformValue(ValueType::V_VEC3, "pointLight.specular", Value<vec3>::of(pointLight.specular));
+    minicube->setUniformValue(ValueType::V_FLOAT, "pointLight.constant", Value<float>::of(pointLight.constant));
+    minicube->setUniformValue(ValueType::V_FLOAT, "pointLight.linear", Value<float>::of(pointLight.linear));
+    minicube->setUniformValue(ValueType::V_FLOAT, "pointLight.quadratic", Value<float>::of(pointLight.quadratic));
 
     scene.addShape(minicube);
 }

@@ -24,8 +24,7 @@ bool loadAssImp(const char *path, GLProgram *program, vector<Shape3D *> &meshVec
 		mesh = scene->mMeshes[nm];
 
 		vector<vec3> vertices;
-		vector<vec4> colors;
-		vector<vec2> texCoords;
+		// vector<vec2> texCoords;
 		vector<vec3> normals;
 		vector<uint> indices;
 		aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
@@ -83,11 +82,10 @@ bool loadAssImp(const char *path, GLProgram *program, vector<Shape3D *> &meshVec
 
 		// Fill vertices texture coordinates
 
-		for (unsigned int i = 0; i < mesh->mNumVertices; i++)
-		{
-			texCoords.push_back(glm::vec2(0.0, 0.0));
-			colors.push_back(vec4(1.0, 0.0, 0.0, 1.0));
-		}
+		// for (unsigned int i = 0; i < mesh->mNumVertices; i++)
+		// {
+		// 	texCoords.push_back(glm::vec2(0.0, 0.0));
+		// }
 
 		// Fill vertices normals
 
@@ -107,7 +105,7 @@ bool loadAssImp(const char *path, GLProgram *program, vector<Shape3D *> &meshVec
 			indices.push_back(mesh->mFaces[i].mIndices[2]);
 		}
 
-		meshVector.push_back(Mesh::create(program, vertices, normals, indices, mat, GL_TRIANGLES));
+		meshVector.push_back(Mesh::create(program, vertices, normals, indices, vector<vec2>(), mat, GL_TRIANGLES));
 	}
 	return true;
 }

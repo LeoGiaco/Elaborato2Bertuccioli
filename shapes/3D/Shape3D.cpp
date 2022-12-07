@@ -2,12 +2,9 @@
 #include <iostream>
 
 Shape3D::Shape3D(GLProgram *program, vector<vec3> vertices, vector<vec3> normals, vector<GLuint> indices, Material mat, GLenum drawMode, bool doDynamicDraw)
-    : ShapeBase(drawMode, doDynamicDraw), HasShader(program), HasCollider(), material(mat)
+    : ShapeBase(drawMode, doDynamicDraw), HasShader(program), HasCollider()
 {
-    // for (size_t i = 0; i < vertices.size(); i++)
-    // {
-    //     this->vertices.push_back(vertices[i]);
-    // }
+    setMaterial(mat);
 
     this->vertices.assign(vertices.begin(), vertices.end());
     this->normals.assign(normals.begin(), normals.end());
@@ -41,6 +38,20 @@ void Shape3D::initShape()
     glGenBuffers(1, &(this->EBO_indices));
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO_indices);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indices.size() * sizeof(GLuint), this->indices.data(), draw_type);
+}
+
+Material Shape3D::getMaterial()
+{
+    return material;
+}
+
+void Shape3D::setMaterial(Material mat)
+{
+    material = mat;
+    setUniformValue(ValueType::V_VEC3, "material.ambient", Value<vec3>::of(material.ambient));
+    setUniformValue(ValueType::V_VEC3, "material.diffuse", Value<vec3>::of(material.diffuse));
+    setUniformValue(ValueType::V_VEC3, "material.specular", Value<vec3>::of(material.specular));
+    setUniformValue(ValueType::V_FLOAT, "material.shininess", Value<float>::of(material.shininess));
 }
 
 quat Shape3D::getRotationQuat()

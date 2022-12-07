@@ -34,6 +34,10 @@ protected:
     Shape3D(GLProgram *program, vector<vec3> vertices, vector<vec3> normals, vector<GLuint> indices, Material mat, GLenum drawMode, bool doDynamicDraw = false);
 
 public:
+    Material getMaterial();
+
+    void setMaterial(Material mat);
+
     virtual quat getRotationQuat();
 
     virtual quat getAnchorRotationQuat();

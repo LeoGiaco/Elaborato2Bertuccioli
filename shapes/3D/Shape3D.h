@@ -27,13 +27,16 @@ protected:
 
     Material material = {};
 
+    bool isCubeMap = false;
+    uint cubeMapTextureID;
+
     void initShape();
 
     virtual void drawInternal();
 
     virtual void sendUniformValues();
 
-    Shape3D(GLProgram *program, vector<vec3> vertices, vector<vec3> normals, vector<GLuint> indices, vector<vec2> texCoords, Material mat, GLenum drawMode, bool doDynamicDraw = false);
+    Shape3D(GLProgram *program, vector<vec3> vertices, vector<vec3> normals, vector<GLuint> indices, vector<vec2> texCoords, Material mat, GLenum drawMode, bool isCubeMap = false, uint cubeMapTextureID = 0, bool doDynamicDraw = false);
 
 public:
     Material getMaterial();
@@ -73,9 +76,11 @@ public:
     // The vector contains (xMin, yMin, zMin) and (xMax, yMax, zMax).
     virtual vector<vec3> getBoxCollider();
 
-    static Shape3D *create(GLProgram *program, vector<vec3> vertices, vector<vec3> normals, vector<GLuint> indices, vector<vec2> texCoords, Material mat, GLenum drawMode, bool doDynamicDraw = false);
+    static Shape3D *create(GLProgram *program, vector<vec3> vertices, vector<vec3> normals, vector<GLuint> indices, vector<vec2> texCoords, Material mat, GLenum drawMode, bool isCubeMap = false, uint cubeMapTextureID = 0, bool doDynamicDraw = false);
 
     static Shape3D *cube(GLProgram *program, Material mat, uint resolution);
+
+    static Shape3D *cubemap(GLProgram *program, uint cubeMapTextureID);
 
     static Shape3D *sphere(GLProgram *program, Material mat, uint resolution);
 

@@ -1,8 +1,8 @@
 #include "Shape3D.h"
 #include <iostream>
 
-Shape3D::Shape3D(GLProgram *program, vector<vec3> vertices, vector<vec3> normals, vector<GLuint> indices, vector<vec2> texCoords, Material mat, GLenum drawMode, bool doDynamicDraw)
-    : ShapeBase(drawMode, doDynamicDraw), HasShader(program), HasCollider()
+Shape3D::Shape3D(GLProgram *program, vector<vec3> vertices, vector<vec3> normals, vector<GLuint> indices, vector<vec2> texCoords, Material mat, GLenum drawMode, bool isCubeMap, uint cubeMapTextureID, bool doDynamicDraw)
+    : ShapeBase(drawMode, doDynamicDraw), HasShader(program), HasCollider(), isCubeMap(isCubeMap), cubeMapTextureID(cubeMapTextureID)
 {
     setMaterial(mat);
 
@@ -159,13 +159,20 @@ void Shape3D::calculateModelIfUpdated()
 
 void Shape3D::drawInternal()
 {
+    if (isCubeMap)
+        // glDepthMask(GL_FALSE);
+        glDepthFunc(GL_LEQUAL);
+
     program->useProgram(shapeShaders);
     sendUniformValues();
 
     glBindVertexArray(VAO);
-    // glDrawArrays(drawMode, 0, vertices.size());
     glDrawElements(drawMode, indices.size() * sizeof(GLuint), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
+
+    if (isCubeMap)
+        // glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LESS);
 }
 
 vector<vec3> Shape3D::getBoxCollider()
@@ -209,7 +216,7 @@ void Shape3D::sendUniformValues()
     GLProgramInstance::sendUniformValues(&(this->uniformValues), program->getProgram(shapeShaders));
 }
 
-Shape3D *Shape3D::create(GLProgram *program, vector<vec3> vertices, vector<vec3> normals, vector<GLuint> indices, vector<vec2> texCoords, Material mat, GLenum drawMode, bool doDynamicDraw)
+Shape3D *Shape3D::create(GLProgram *program, vector<vec3> vertices, vector<vec3> normals, vector<GLuint> indices, vector<vec2> texCoords, Material mat, GLenum drawMode, bool isCubeMap, uint cubeMapTextureID, bool doDynamicDraw)
 {
     Shape3D *shape = new Shape3D(program, vertices, normals, indices, texCoords, mat, drawMode, doDynamicDraw);
 
@@ -360,6 +367,22 @@ Shape3D *Shape3D::cube(GLProgram *program, Material mat, uint resolution)
     }
 
     return Shape3D::create(program, vertices, normals, indices, vector<vec2>(), mat, GL_TRIANGLES);
+}
+
+Shape3D *Shape3D::cubemap(GLProgram *program, uint cubeMapTextureID)
+{
+    Material empty{};
+
+    vector<vec3> vertices;
+    vector<vec3> normals;
+    vector<GLuint> indices;
+
+    for (int i = 0; i < 6; i++)
+    {
+        cube_face(Face(i), 2, &vertices, &normals, &indices);
+    }
+
+    return Shape3D::create(program, vertices, normals, indices, vector<vec2>(), empty, GL_TRIANGLES, true);
 }
 
 pair<bool, size_t> find_index(vector<pair<vec3, size_t>> *vect, vec3 v)

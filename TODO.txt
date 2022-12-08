@@ -1,6 +1,5 @@
 Aggiungere rotazione con mouse
 Aggiungere selezione degli oggetti di scena
-Aggiungere possibilità di cambiare shader agli oggetti di scena selezionati (solo a pianeta oceano)
-Aggiungere una cubemap alla scena
+Aggiungere possibilità di cambiare shader agli oggetti di scena selezionati (pianeta, oceano e esploratore)
 Creare nuovi filtri per il calcolo della superficie (magari)
 Aggiungere texture per il colore della superficie del terreno

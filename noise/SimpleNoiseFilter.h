@@ -1,3 +1,5 @@
+#pragma once
+
 #include "NoiseFilter.h"
 
 class SimpleNoiseFilter : public NoiseFilter

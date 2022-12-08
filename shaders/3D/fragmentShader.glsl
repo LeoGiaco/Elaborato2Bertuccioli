@@ -180,7 +180,7 @@ void main()
 	{
 		if (cartoon == 1)
 		{
-  			float intensity = max(0.2, dot(normalize(pos.xyz - pointLight.position), normalize(normalV)));
+  			float intensity = dot(normalize(pos.xyz - pointLight.position), normalize(normalV));
   			intensity = intensity - mod(intensity, 1.0 / shades);
 
 			result = material.diffuse * (vec3(1.0) * intensity);

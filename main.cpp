@@ -20,6 +20,8 @@
 
 string vshader = "shaders/3D/vertexShader.glsl";
 string fshader = "shaders/3D/fragmentShader.glsl";
+string vshaderCM = "shaders/3D/vertexShader_CubeMap.glsl";
+string fshaderCM = "shaders/3D/fragmentShader_CubeMap.glsl";
 string vshaderInterp = "shaders/3D/vertexShaderOLD.glsl";
 string fshaderInterp = "shaders/3D/fragmentShaderOLD.glsl";
 string vshaderSimple = "shaders/3D/vertexShaderSimple.glsl";
@@ -40,8 +42,9 @@ mat4 projection = perspective(radians(45.0f), (float)WINDOW_WIDTH / WINDOW_HEIGH
 Window w(&program, &scene, WINDOW_WIDTH, WINDOW_HEIGHT);
 
 Terrain *terrain;
-Mesh *terrainMesh, *ocean, *minicube;
+Mesh *terrainMesh, *ocean, *explorer;
 Mesh *lightSphere;
+Mesh *skybox;
 
 void drawCallback()
 {
@@ -84,8 +87,8 @@ void updateCallback(int v)
     terrainMesh->rotate(vec3(0, 1, 0), radians(30.0f * DELTA_T));
     ocean->rotate(vec3(0, 1, 0), radians(30.0f * DELTA_T));
     // cube->rotate(vec3(1, 0, 0), radians(90.0f * DELTA_T) * rotateY);
-    minicube->rotateAroundAnchor(vec3(0, 0, 1), radians(30.0f * DELTA_T));
-    minicube->rotateAroundAnchor(vec3(1, 0, 0), radians(20.0f * DELTA_T));
+    explorer->rotateAroundAnchor(vec3(0, 0, 1), radians(30.0f * DELTA_T));
+    explorer->rotateAroundAnchor(vec3(1, 0, 0), radians(20.0f * DELTA_T));
     if (rotateX != 0 || rotateY != 0)
     {
         quat rotation = angleAxis(radians(90.0f * DELTA_T) * rotateX, vec3(camera.getUpVector()));
@@ -99,8 +102,8 @@ void updateCallback(int v)
         camera.setPosition(camera.getTarget() - normalize(camera.getDirection()) * 5.0f);
     }
 
-    float height = terrain->getSurfaceHeight(normalize(minicube->getWorldPosition() - terrainMesh->getWorldPosition())) + 0.05f;
-    minicube->setPosition(vec3(0, height * terrainMesh->getScale().x, 0)); // Works only if the scale is uniform.
+    float height = terrain->getSurfaceHeight(normalize(explorer->getWorldPosition() - terrainMesh->getWorldPosition())) + 0.05f;
+    explorer->setPosition(vec3(0, height * terrainMesh->getScale().x, 0)); // Works only if the scale is uniform.
 
     auto it = program.getIterator();
     for (size_t i = 0; i < program.programsCount(); i++, it++)
@@ -171,26 +174,26 @@ void keyDown(unsigned char key, int x, int y)
     case 's':
         terrainMesh->setShaderProgram(shaderFragment ? "default" : "interp");
         ocean->setShaderProgram(shaderFragment ? "default" : "interp");
-        minicube->setShaderProgram(shaderFragment ? "default" : "interp");
+        explorer->setShaderProgram(shaderFragment ? "default" : "interp");
 
         shaderFragment = !shaderFragment;
         break;
     case 'l':
         terrainMesh->setUniformValue(ValueType::V_INT, "useDirLight", Value<int>::of(useDirLight));
         ocean->setUniformValue(ValueType::V_INT, "useDirLight", Value<int>::of(useDirLight));
-        minicube->setUniformValue(ValueType::V_INT, "useDirLight", Value<int>::of(useDirLight));
+        explorer->setUniformValue(ValueType::V_INT, "useDirLight", Value<int>::of(useDirLight));
         useDirLight = 1 - useDirLight;
         break;
     case 'b':
         terrainMesh->setUniformValue(ValueType::V_INT, "blinn", Value<int>::of(blinn));
         ocean->setUniformValue(ValueType::V_INT, "blinn", Value<int>::of(blinn));
-        minicube->setUniformValue(ValueType::V_INT, "blinn", Value<int>::of(blinn));
+        explorer->setUniformValue(ValueType::V_INT, "blinn", Value<int>::of(blinn));
         blinn = 1 - blinn;
         break;
     case 'c':
         terrainMesh->setUniformValue(ValueType::V_INT, "cartoon", Value<int>::of(cartoon));
         ocean->setUniformValue(ValueType::V_INT, "cartoon", Value<int>::of(cartoon));
-        minicube->setUniformValue(ValueType::V_INT, "cartoon", Value<int>::of(cartoon));
+        explorer->setUniformValue(ValueType::V_INT, "cartoon", Value<int>::of(cartoon));
 
         cartoon = 1 - cartoon;
         break;
@@ -198,14 +201,14 @@ void keyDown(unsigned char key, int x, int y)
         shades++;
         terrainMesh->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(shades));
         ocean->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(shades));
-        minicube->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(shades));
+        explorer->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(shades));
         break;
     case '-':
         if (shades > 2)
             shades--;
         terrainMesh->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(shades));
         ocean->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(shades));
-        minicube->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(shades));
+        explorer->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(shades));
         break;
 
     default:
@@ -219,12 +222,27 @@ void keyUp(unsigned char key, int x, int y)
 
 void createShapes()
 {
+    Material matEmpty{};
+
+    vector<string> faces;
+    faces.push_back("./shapes/cubemap/px.png");
+    faces.push_back("./shapes/cubemap/nx.png");
+    faces.push_back("./shapes/cubemap/py.png");
+    faces.push_back("./shapes/cubemap/ny.png");
+    faces.push_back("./shapes/cubemap/pz.png");
+    faces.push_back("./shapes/cubemap/nz.png");
+    uint cubemapTexture = loadCubemap(faces, 0);
+
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+
+    skybox = Mesh::cubemap(&program, cubemapTexture);
+    skybox->setShaderProgram("cubemap");
+    skybox->setUniformValue(ValueType::V_INT, "skybox", Value<int>::of(0));
+
     dirLight.ambient = vec3(0.3f, 0.3f, 0.3f);
     dirLight.diffuse = vec3(0.4f, 0.4f, 0.4f);
     dirLight.specular = vec3(0.8f, 0.8f, 0.8f);
     dirLight.direction = vec3(0, 0.0f, -1.0f);
-
-    Material matEmpty{};
 
     pointLight.position = vec3(8, 3, 0);
     pointLight.ambient = vec3(0.3f, 0.3f, 0.2f);
@@ -313,32 +331,34 @@ void createShapes()
     mat3.diffuse = vec4(0.8f, 0.8f, 0.8f, 1);
     mat3.specular = vec4(1, 1, 1, 1);
     mat3.shininess = 32;
-    minicube = Mesh::sphere(&program, mat3, 8);
-    minicube->setAnchorPosition(0, 0, 0);
-    minicube->setPosition(1, 0, 0);
-    minicube->rotateAroundAnchor(vec3(1, 0, 0), radians(90.0f));
-    // minicube->rotateAroundAnchor(vec3(1, 0, 0), radians(45.0f));
-    minicube->setScale(0.05);
-    minicube->setShaderProgram("default");
+    explorer = Mesh::sphere(&program, mat3, 8);
+    explorer->setAnchorPosition(0, 0, 0);
+    explorer->setPosition(1, 0, 0);
+    explorer->rotateAroundAnchor(vec3(1, 0, 0), radians(90.0f));
+    // explorer->rotateAroundAnchor(vec3(1, 0, 0), radians(45.0f));
+    explorer->setScale(0.05);
+    explorer->setShaderProgram("default");
 
-    minicube->setUniformValue(ValueType::V_INT, "useDirLight", Value<int>::of(0));
-    minicube->setUniformValue(ValueType::V_VEC3, "dirLight.direction", Value<vec3>::of(dirLight.direction));
-    minicube->setUniformValue(ValueType::V_VEC3, "dirLight.ambient", Value<vec3>::of(dirLight.ambient));
-    minicube->setUniformValue(ValueType::V_VEC3, "dirLight.diffuse", Value<vec3>::of(dirLight.diffuse));
-    minicube->setUniformValue(ValueType::V_VEC3, "dirLight.specular", Value<vec3>::of(dirLight.specular));
+    explorer->setUniformValue(ValueType::V_INT, "useDirLight", Value<int>::of(0));
+    explorer->setUniformValue(ValueType::V_VEC3, "dirLight.direction", Value<vec3>::of(dirLight.direction));
+    explorer->setUniformValue(ValueType::V_VEC3, "dirLight.ambient", Value<vec3>::of(dirLight.ambient));
+    explorer->setUniformValue(ValueType::V_VEC3, "dirLight.diffuse", Value<vec3>::of(dirLight.diffuse));
+    explorer->setUniformValue(ValueType::V_VEC3, "dirLight.specular", Value<vec3>::of(dirLight.specular));
 
-    minicube->setUniformValue(ValueType::V_INT, "blinn", Value<int>::of(0));
-    minicube->setUniformValue(ValueType::V_INT, "cartoon", Value<int>::of(0));
-    minicube->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(5));
-    minicube->setUniformValue(ValueType::V_VEC3, "pointLight.position", Value<vec3>::of(pointLight.position));
-    minicube->setUniformValue(ValueType::V_VEC3, "pointLight.ambient", Value<vec3>::of(pointLight.ambient));
-    minicube->setUniformValue(ValueType::V_VEC3, "pointLight.diffuse", Value<vec3>::of(pointLight.diffuse));
-    minicube->setUniformValue(ValueType::V_VEC3, "pointLight.specular", Value<vec3>::of(pointLight.specular));
-    minicube->setUniformValue(ValueType::V_FLOAT, "pointLight.constant", Value<float>::of(pointLight.constant));
-    minicube->setUniformValue(ValueType::V_FLOAT, "pointLight.linear", Value<float>::of(pointLight.linear));
-    minicube->setUniformValue(ValueType::V_FLOAT, "pointLight.quadratic", Value<float>::of(pointLight.quadratic));
+    explorer->setUniformValue(ValueType::V_INT, "blinn", Value<int>::of(0));
+    explorer->setUniformValue(ValueType::V_INT, "cartoon", Value<int>::of(0));
+    explorer->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(5));
+    explorer->setUniformValue(ValueType::V_VEC3, "pointLight.position", Value<vec3>::of(pointLight.position));
+    explorer->setUniformValue(ValueType::V_VEC3, "pointLight.ambient", Value<vec3>::of(pointLight.ambient));
+    explorer->setUniformValue(ValueType::V_VEC3, "pointLight.diffuse", Value<vec3>::of(pointLight.diffuse));
+    explorer->setUniformValue(ValueType::V_VEC3, "pointLight.specular", Value<vec3>::of(pointLight.specular));
+    explorer->setUniformValue(ValueType::V_FLOAT, "pointLight.constant", Value<float>::of(pointLight.constant));
+    explorer->setUniformValue(ValueType::V_FLOAT, "pointLight.linear", Value<float>::of(pointLight.linear));
+    explorer->setUniformValue(ValueType::V_FLOAT, "pointLight.quadratic", Value<float>::of(pointLight.quadratic));
 
-    scene.addShape(minicube);
+    scene.addShape(explorer);
+
+    scene.addShape(skybox);
 }
 
 int main(int argc, char *argv[])
@@ -357,6 +377,11 @@ int main(int argc, char *argv[])
     inst->useProgram();
 
     inst = program.createProgram("interp", PROJECT_FOLDER + vshaderInterp, PROJECT_FOLDER + fshaderInterp);
+    inst->setProjectionMatrix(projection);
+    inst->setViewPosition(camera.getPosition());
+    inst->setViewMatrix(camera.getView());
+
+    inst = program.createProgram("cubemap", PROJECT_FOLDER + vshaderCM, PROJECT_FOLDER + fshaderCM);
     inst->setProjectionMatrix(projection);
     inst->setViewPosition(camera.getPosition());
     inst->setViewMatrix(camera.getView());

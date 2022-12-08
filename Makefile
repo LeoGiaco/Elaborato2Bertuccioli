@@ -1,9 +1,9 @@
 SHELL=/bin/bash
-FLAGS=-g -I ./core -I ./shapes -lglut -lGLU -lGL -lGLEW
+FLAGS=-g -I ./core -I ./shapes -lglut -lGLU -lGL -lGLEW -lassimp
 
 all: main.out
 
-main.out: ./bin/main.o ./bin/Window.o ./bin/GLProgram.o ./bin/Scene.o ./bin/Camera.o ./bin/Shape3D.o ./bin/HasUniformValues.o ./bin/HasShader.o ./bin/HasCollider.o ./bin/ShapeBase.o ./bin/NoiseFilter.o ./bin/SimpleNoiseFilter.o ./bin/Terrain.o
+main.out: ./bin/main.o ./bin/Window.o ./bin/GLProgram.o ./bin/Scene.o ./bin/Camera.o ./bin/Shape3D.o ./bin/HasUniformValues.o ./bin/HasShader.o ./bin/HasCollider.o ./bin/ShapeBase.o ./bin/NoiseFilter.o ./bin/SimpleNoiseFilter.o ./bin/Terrain.o ./bin/Meshes.o ./bin/loadtextures.o
 	g++ -o main.out ./bin/*.o ${FLAGS}
 
 ./bin/main.o: main.cpp
@@ -39,6 +39,9 @@ main.out: ./bin/main.o ./bin/Window.o ./bin/GLProgram.o ./bin/Scene.o ./bin/Came
 ./bin/HasCollider.o: ./shapes/common/HasCollider.cpp ./shapes/common/HasCollider.h
 	g++ -c -o ./bin/HasCollider.o ./shapes/common/HasCollider.cpp ${FLAGS}
 
+./bin/loadtextures.o: ./shapes/common/loadtextures.cpp ./shapes/common/loadtextures.h
+	g++ -c -o ./bin/loadtextures.o ./shapes/common/loadtextures.cpp ${FLAGS}
+
 ./bin/Camera.o: ./core/Camera.cpp ./core/Camera.h
 	g++ -c -o ./bin/Camera.o ./core/Camera.cpp ${FLAGS}
 
@@ -47,6 +50,10 @@ main.out: ./bin/main.o ./bin/Window.o ./bin/GLProgram.o ./bin/Scene.o ./bin/Came
 
 ./bin/SimpleNoiseFilter.o: ./noise/SimpleNoiseFilter.cpp ./noise/SimpleNoiseFilter.h
 	g++ -c -o ./bin/SimpleNoiseFilter.o ./noise/SimpleNoiseFilter.cpp ${FLAGS}
+
+./bin/Meshes.o: ./core/load_meshes_assimp.cpp ./core/load_meshes_assimp.hpp
+	g++ -c -o ./bin/Meshes.o ./core/load_meshes_assimp.cpp ${FLAGS}
+
 
 .PHONY: clean
 

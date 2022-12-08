@@ -1,3 +1,5 @@
+#pragma once
+
 #include "common.h"
 #include "../shapes/3D/ComplexShape3D.h"
 #include "../shapes/3D/Shape3D.h"

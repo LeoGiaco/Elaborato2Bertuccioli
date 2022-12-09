@@ -218,7 +218,7 @@ void Shape3D::sendUniformValues()
 
 Shape3D *Shape3D::create(GLProgram *program, vector<vec3> vertices, vector<vec3> normals, vector<GLuint> indices, vector<vec2> texCoords, Material mat, GLenum drawMode, bool isCubeMap, uint cubeMapTextureID, bool doDynamicDraw)
 {
-    Shape3D *shape = new Shape3D(program, vertices, normals, indices, texCoords, mat, drawMode, doDynamicDraw);
+    Shape3D *shape = new Shape3D(program, vertices, normals, indices, texCoords, mat, drawMode, isCubeMap, cubeMapTextureID, doDynamicDraw);
 
     shape->initShape();
 

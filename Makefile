@@ -1,5 +1,5 @@
 SHELL=/bin/bash
-FLAGS=-g -I ./core -I ./shapes -lglut -lGLU -lGL -lGLEW -lassimp
+FLAGS=-std=c++17 -g -I ./core -I ./shapes -lglut -lGLU -lGL -lGLEW -lassimp
 
 all: main.out
 

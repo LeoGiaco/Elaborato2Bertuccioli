@@ -2,6 +2,7 @@
 
 in vec3 normalV;
 in vec4 pos;
+in float height01;
 
 struct SpotLight 
 {
@@ -51,6 +52,11 @@ uniform int useDirLight = 0;
 uniform int cartoon = 0;
 uniform int shades = 10;
 
+uniform int useTexture = 0;
+uniform sampler1D samplerSurface;
+
+vec3 texCol; 	// Color of the texture.
+
 struct Material 
 {
 	vec3 ambient;
@@ -59,7 +65,6 @@ struct Material
 	float shininess;
 };
 uniform Material material;
-
 
 out vec4 FragColor;
 
@@ -83,8 +88,8 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
 	}
 
     // combine results
-    vec3 ambient = light.ambient * material.ambient;
-    vec3 diffuse = light.diffuse * diff * material.diffuse;
+    vec3 ambient = light.ambient * material.ambient * texCol;
+    vec3 diffuse = light.diffuse * diff * material.diffuse * texCol;
     vec3 specular = light.specular * spec * material.specular;
     return (ambient + diffuse + specular);
 }
@@ -111,8 +116,8 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 	float attenuation = 1.0 / (light.constant + light.linear * distance +
 		light.quadratic * (distance * distance));
 	// Combine results.
-	vec3 ambient = light.ambient * material.ambient;
-	vec3 diffuse = light.diffuse * diff * material.diffuse;
+	vec3 ambient = light.ambient * material.ambient * texCol;
+	vec3 diffuse = light.diffuse * diff * material.diffuse * texCol;
 	vec3 specular = light.specular * spec * material.specular;
 
 	return (ambient + diffuse + specular) * attenuation;
@@ -143,9 +148,9 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 	float attenuation = light.power / (light.constant + light.linear * dist +		// Attenuation (light's decrease of energy).
 		light.quadratic * (dist * dist));
 
-	vec3 ambient = light.ambient * material.ambient;  		// Ambient light (light always present).
-	vec3 diffuse = light.diffuse * diff * material.diffuse;	                        // Diffuse light (light bouncing back with partial strength).
-	vec3 specular = light.specular * spec * material.specular;	                    // Specular light (light bouncing back full strength).
+	vec3 ambient = light.ambient * material.ambient * texCol;			// Ambient light (light always present).
+	vec3 diffuse = light.diffuse * diff * material.diffuse * texCol;		// Diffuse light (light bouncing back with partial strength).
+	vec3 specular = light.specular * spec * material.specular;	                    				// Specular light (light bouncing back full strength).
 
 	return (ambient + (diffuse + specular) * intensity) * attenuation;
 }
@@ -161,7 +166,9 @@ void main()
 		result += CalcPointLight(pointLights[i], norm, fragPos, viewDir);*/
 
 	vec3 result;
-	
+
+	texCol = useTexture == 0 ? vec3(1, 1, 1) : texture(samplerSurface, height01).xyz;
+
 	if (useDirLight == 1) 
 	{
 		if (cartoon == 1)
@@ -169,7 +176,7 @@ void main()
   			float intensity = max(0.2, dot(normalize(-dirLight.direction), normalize(normalV)));
   			intensity = intensity - mod(intensity, 1.0 / shades);
 
-			result = material.diffuse * (vec3(1.0) * intensity);
+			result = material.diffuse * texCol * (vec3(1.0) * intensity);
 		}
 		else
 		{
@@ -183,7 +190,7 @@ void main()
   			float intensity = dot(normalize(pos.xyz - pointLight.position), normalize(normalV));
   			intensity = intensity - mod(intensity, 1.0 / shades);
 
-			result = material.diffuse * (vec3(1.0) * intensity);
+			result = material.diffuse * texCol * (vec3(1.0) * intensity);
 		}
 		else
 		{

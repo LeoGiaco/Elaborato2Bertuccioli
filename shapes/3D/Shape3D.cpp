@@ -382,7 +382,7 @@ Shape3D *Shape3D::cubemap(GLProgram *program, uint cubeMapTextureID)
         cube_face(Face(i), 2, &vertices, &normals, &indices);
     }
 
-    return Shape3D::create(program, vertices, normals, indices, vector<vec2>(), empty, GL_TRIANGLES, true);
+    return Shape3D::create(program, vertices, normals, indices, vector<vec2>(), empty, GL_TRIANGLES, true, cubeMapTextureID);
 }
 
 pair<bool, size_t> find_index(vector<pair<vec3, size_t>> *vect, vec3 v)

@@ -36,6 +36,8 @@ DirLight dirLight;
 PointLight pointLight;
 
 int rotateX, rotateY;
+bool mousePressed = false;
+int lastX = 0, lastY = 0;
 
 mat4 projection = perspective(radians(45.0f), (float)WINDOW_WIDTH / WINDOW_HEIGHT, 0.1f, 2000.0f);
 
@@ -84,11 +86,11 @@ void updateCallback(int v)
 
     t += DELTA_T;
 
-    terrainMesh->rotate(vec3(0, 1, 0), radians(30.0f * DELTA_T));
-    ocean->rotate(vec3(0, 1, 0), radians(30.0f * DELTA_T));
-    // cube->rotate(vec3(1, 0, 0), radians(90.0f * DELTA_T) * rotateY);
-    explorer->rotateAroundAnchor(vec3(0, 0, 1), radians(30.0f * DELTA_T));
-    explorer->rotateAroundAnchor(vec3(1, 0, 0), radians(20.0f * DELTA_T));
+    // terrainMesh->rotate(vec3(0, 1, 0), radians(30.0f * DELTA_T));
+    // ocean->rotate(vec3(0, 1, 0), radians(30.0f * DELTA_T));
+    // // cube->rotate(vec3(1, 0, 0), radians(90.0f * DELTA_T) * rotateY);
+    // explorer->rotateAroundAnchor(vec3(0, 0, 1), radians(30.0f * DELTA_T));
+    // explorer->rotateAroundAnchor(vec3(1, 0, 0), radians(20.0f * DELTA_T));
     if (rotateX != 0 || rotateY != 0)
     {
         quat rotation = angleAxis(radians(90.0f * DELTA_T) * rotateX, vec3(camera.getUpVector()));
@@ -225,14 +227,15 @@ void createShapes()
     Material matEmpty{};
 
     vector<string> faces;
-    faces.push_back("./shapes/cubemap/px.png");
-    faces.push_back("./shapes/cubemap/nx.png");
-    faces.push_back("./shapes/cubemap/py.png");
-    faces.push_back("./shapes/cubemap/ny.png");
-    faces.push_back("./shapes/cubemap/pz.png");
-    faces.push_back("./shapes/cubemap/nz.png");
+    faces.push_back(PROJECT_FOLDER + string("img/cubemap/px.png"));
+    faces.push_back(PROJECT_FOLDER + string("img/cubemap/nx.png"));
+    faces.push_back(PROJECT_FOLDER + string("img/cubemap/py.png"));
+    faces.push_back(PROJECT_FOLDER + string("img/cubemap/ny.png"));
+    faces.push_back(PROJECT_FOLDER + string("img/cubemap/pz.png"));
+    faces.push_back(PROJECT_FOLDER + string("img/cubemap/nz.png"));
     uint cubemapTexture = loadCubemap(faces, 0);
 
+    glActiveTexture(0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
 
     skybox = Mesh::cubemap(&program, cubemapTexture);
@@ -245,8 +248,8 @@ void createShapes()
     dirLight.direction = vec3(0, 0.0f, -1.0f);
 
     pointLight.position = vec3(8, 3, 0);
-    pointLight.ambient = vec3(0.3f, 0.3f, 0.2f);
-    pointLight.diffuse = vec3(0.4f, 0.4f, 0.2f);
+    pointLight.ambient = vec3(0.3f, 0.3f, 0.3f);
+    pointLight.diffuse = vec3(0.4f, 0.4f, 0.3f);
     pointLight.specular = vec3(0.8f, 0.8f, 0.8f);
     pointLight.constant = 0.4f;
     pointLight.linear = 0.02f;
@@ -261,8 +264,8 @@ void createShapes()
     scene.addShape(lightSphere);
 
     Material mat1;
-    mat1.ambient = vec4(0.0f, 0.4f, 0.0f, 1);
-    mat1.diffuse = vec4(0.0f, 0.4f, 0.0f, 1);
+    mat1.ambient = vec4(1, 1, 1, 1);
+    mat1.diffuse = vec4(1, 1, 1, 1);
     mat1.specular = vec4(0.9f, 0.9f, 0.9f, 1);
     mat1.shininess = 20;
 
@@ -293,8 +296,16 @@ void createShapes()
     terrainMesh->setUniformValue(ValueType::V_FLOAT, "pointLight.constant", Value<float>::of(pointLight.constant));
     terrainMesh->setUniformValue(ValueType::V_FLOAT, "pointLight.linear", Value<float>::of(pointLight.linear));
     terrainMesh->setUniformValue(ValueType::V_FLOAT, "pointLight.quadratic", Value<float>::of(pointLight.quadratic));
-    // terrainMesh->drawWireframe(true);
 
+    uint surfaceTexture = loadTexture1D(PROJECT_FOLDER + string("img/surface.jpg"), 0);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_1D, surfaceTexture);
+    terrainMesh->setUniformValue(ValueType::V_INT, "useTexture", Value<int>::of(1));
+    terrainMesh->setUniformValue(ValueType::V_INT, "samplerSurface", Value<int>::of(1));
+    terrainMesh->setUniformValue(ValueType::V_FLOAT, "minHeight", Value<float>::of(0.87f));
+    terrainMesh->setUniformValue(ValueType::V_FLOAT, "maxHeight", Value<float>::of(1.1f));
+
+    // terrainMesh->drawWireframe(true);
     scene.addShape(terrainMesh);
 
     Material mat2;
@@ -323,6 +334,7 @@ void createShapes()
     ocean->setUniformValue(ValueType::V_FLOAT, "pointLight.constant", Value<float>::of(pointLight.constant));
     ocean->setUniformValue(ValueType::V_FLOAT, "pointLight.linear", Value<float>::of(pointLight.linear));
     ocean->setUniformValue(ValueType::V_FLOAT, "pointLight.quadratic", Value<float>::of(pointLight.quadratic));
+    ocean->setUniformValue(ValueType::V_INT, "useTexture", Value<int>::of(0));
     // ocean->drawWireframe(true);
     scene.addShape(ocean);
 
@@ -355,10 +367,64 @@ void createShapes()
     explorer->setUniformValue(ValueType::V_FLOAT, "pointLight.constant", Value<float>::of(pointLight.constant));
     explorer->setUniformValue(ValueType::V_FLOAT, "pointLight.linear", Value<float>::of(pointLight.linear));
     explorer->setUniformValue(ValueType::V_FLOAT, "pointLight.quadratic", Value<float>::of(pointLight.quadratic));
+    explorer->setUniformValue(ValueType::V_INT, "useTexture", Value<int>::of(0));
 
     scene.addShape(explorer);
 
     scene.addShape(skybox);
+}
+
+void mouseFunc(int button, int state, int x, int y)
+{
+    lastX = x;
+    lastY = y;
+}
+
+vec3 getTrackBallPoint(float x, float y)
+{
+    // Dalla posizione del mouse al punto proiettato sulla semisfera con centro l'origine e raggio 1
+    float delta, tmp;
+    vec3 point;
+    // map to [-1;1]
+    point.x = (2.0f * x - w.getWidth()) / w.getWidth();
+    point.y = (w.getHeight() - 2.0f * y) / w.getHeight();
+
+    // Cooordinata z del punto di coordinate (x,y,z) che si muove sulla sfera virtuale con centro (0,0,0) e raggio r=1
+    tmp = pow(point.x, 2.0) - pow(point.y, 2.0);
+    delta = 1.0f - tmp;
+    if (delta > 0.0f)
+        point.z = sqrt(delta);
+    else
+        point.z = 0;
+
+    return point;
+}
+
+void mouseActiveMotion(int x, int y)
+{
+    glm::vec3 destination = getTrackBallPoint(x, y);
+    glm::vec3 origin = getTrackBallPoint(lastX, lastY);
+    float dx, dy, dz;
+    dx = destination.x - origin.x;
+    dy = destination.y - origin.y;
+    dz = destination.z - origin.z;
+    if (dx || dy || dz)
+    {
+        float angleY = sqrt(dx * dx + dz * dz) * (180.0 / glm::pi<float>());
+        float angleX = sqrt(dy * dy + dz * dz) * (180.0 / glm::pi<float>());
+
+        quat rotation = angleAxis(-radians(angleY) * sign(dx), vec3(camera.getUpVector()));
+        rotation = glm::rotate(rotation, -radians(angleX) * sign(dy), vec3(camera.getRightVector()));
+
+        // Trasformiamo il quaternione in matrice di rotazione
+        mat4 rotation_matrix = toMat4(rotation);
+        // Aggiorniamo direzione e posizione della telecamera
+        camera.setDirection(rotation_matrix * camera.getDirection());
+        camera.setUpVector(rotation_matrix * camera.getUpVector());
+        camera.setPosition(camera.getTarget() - normalize(camera.getDirection()) * 5.0f);
+    }
+    lastX = x;
+    lastY = y;
 }
 
 int main(int argc, char *argv[])
@@ -405,6 +471,9 @@ int main(int argc, char *argv[])
 
     glutKeyboardFunc(keyDown);
     // glutKeyboardUpFunc(keyUp);
+
+    glutMouseFunc(mouseFunc);
+    glutMotionFunc(mouseActiveMotion);
 
     glutSpecialFunc(keySpDown);
     glutSpecialUpFunc(keySpUp);

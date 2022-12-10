@@ -86,11 +86,11 @@ void updateCallback(int v)
 
     t += DELTA_T;
 
-    // terrainMesh->rotate(vec3(0, 1, 0), radians(30.0f * DELTA_T));
-    // ocean->rotate(vec3(0, 1, 0), radians(30.0f * DELTA_T));
-    // // cube->rotate(vec3(1, 0, 0), radians(90.0f * DELTA_T) * rotateY);
-    // explorer->rotateAroundAnchor(vec3(0, 0, 1), radians(30.0f * DELTA_T));
-    // explorer->rotateAroundAnchor(vec3(1, 0, 0), radians(20.0f * DELTA_T));
+    terrainMesh->rotate(vec3(0, 1, 0), radians(30.0f * DELTA_T));
+    ocean->rotate(vec3(0, 1, 0), radians(30.0f * DELTA_T));
+    // cube->rotate(vec3(1, 0, 0), radians(90.0f * DELTA_T) * rotateY);
+    explorer->rotateAroundAnchor(vec3(0, 0, 1), radians(30.0f * DELTA_T));
+    explorer->rotateAroundAnchor(vec3(1, 0, 0), radians(20.0f * DELTA_T));
     if (rotateX != 0 || rotateY != 0)
     {
         quat rotation = angleAxis(radians(90.0f * DELTA_T) * rotateX, vec3(camera.getUpVector()));

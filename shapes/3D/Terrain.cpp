@@ -22,7 +22,7 @@ float Terrain::getSurfaceHeight(vec3 pointOnUnitSphere)
         height += filter.evaluate(normalize(rotatedPointOnSphere), settings[j]);
     }
 
-    return height; // FIXME: doesn't account for anchor shift and scale.
+    return height;
 }
 
 Shape3D *Terrain::getMesh()

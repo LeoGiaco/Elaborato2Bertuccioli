@@ -5,6 +5,7 @@
 #include "core/Window.h"
 #include "core/GLProgram.h"
 #include "core/Scene.h"
+#include "core/load_meshes_assimp.hpp"
 
 // VERSIONE CPP 17 x64
 
@@ -110,7 +111,7 @@ void updateCallback(int v)
         camera.setPosition(camera.getTarget() - normalize(camera.getDirection()) * 5.0f);
     }
 
-    float height = terrain->getSurfaceHeight(normalize(explorer->getWorldPosition() - terrainMesh->getWorldPosition())) + 0.05f;
+    float height = terrain->getSurfaceHeight(normalize(explorer->getWorldPosition() - terrainMesh->getWorldPosition())) + 0.1f;
     explorer->setPosition(vec3(0, height * terrainMesh->getScale().x, 0)); // Works only if the scale is uniform.
 
     auto it = program.getIterator();
@@ -348,12 +349,25 @@ void createShapes()
     mat3.diffuse = vec4(0.8f, 0.8f, 0.8f, 1);
     mat3.specular = vec4(1, 1, 1, 1);
     mat3.shininess = 32;
-    explorer = Mesh::sphere(&program, mat3, 8);
+    vector<Mesh *> meshes;
+    bool loaded = loadAssImp(PROJECT_FOLDER + string("img/crewmate.obj"), &program, meshes);
+
+    if (loaded)
+    {
+        explorer = meshes[0];
+    }
+    else
+    {
+        explorer = Mesh::sphere(&program, mat3, 8);
+    }
+
     explorer->setAnchorPosition(0, 0, 0);
     explorer->setPosition(1, 0, 0);
+    explorer->rotate(vec3(1, 0, 0), radians(180.0f));
+    explorer->rotate(vec3(0, 1, 0), radians(-45.0f));
     explorer->rotateAroundAnchor(vec3(1, 0, 0), radians(90.0f));
     // explorer->rotateAroundAnchor(vec3(1, 0, 0), radians(45.0f));
-    explorer->setScale(0.05);
+    explorer->setScale(0.1);
     explorer->setShaderProgram("default");
 
     explorer->setUniformValue(ValueType::V_INT, "useDirLight", Value<int>::of(0));
@@ -422,7 +436,7 @@ bool ray_sphere(vec3 ray_origin_wor, vec3 ray_direction_wor, vec3 sphere_centre_
     if (delta < 0) // Il raggio non interseca la sfera
         return false;
     // Calcolo i valori di t per cui il raggio interseca la sfera e restituisco il valore dell'intersezione
-    // pi� vicina all'osservatore (la t pi� piccola)
+    // più vicina all'osservatore (la t più piccola)
     if (delta > 0.0f)
     {
         // calcola le due intersezioni
@@ -458,6 +472,9 @@ void mouseFunc(int button, int state, int x, int y)
     static int t = 0;
     lastX = x;
     lastY = y;
+
+    if (button != GLUT_LEFT)
+        return;
 
     switch (state)
     {

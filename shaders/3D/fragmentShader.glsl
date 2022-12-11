@@ -57,6 +57,8 @@ uniform sampler1D samplerSurface;
 
 vec3 texCol; 	// Color of the texture.
 
+uniform int selected;
+
 struct Material 
 {
 	vec3 ambient;
@@ -199,7 +201,7 @@ void main()
 	}
 		
 	
-	FragColor = vec4(result, 1.0);
+	FragColor = mix(vec4(result, 1.0), vec4(1.0, 0.5, 0.0, 1.0), selected * 0.3);
 	// if (pos.z < 0)
 	// 	FragColor = vec4(1.0, 0.0, 0.0, 0.0);
 	// else

@@ -1,11 +1,11 @@
 #include "load_meshes_assimp.hpp"
 
-bool loadAssImp(const char *path, GLProgram *program, vector<Shape3D *> &meshVector)
+bool loadAssImp(string path, GLProgram *program, vector<Shape3D *> &meshVector)
 {
 
 	Assimp::Importer importer;
 
-	const aiScene *scene = importer.ReadFile(path, aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_FlipUVs);
+	const aiScene *scene = importer.ReadFile(path.c_str(), aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_FlipUVs);
 	if (!scene)
 	{
 		fprintf(stderr, importer.GetErrorString());
@@ -16,7 +16,6 @@ bool loadAssImp(const char *path, GLProgram *program, vector<Shape3D *> &meshVec
 
 	// Fill vertices positions
 	int num_meshes = scene->mNumMeshes; // Numero di oggetti che compongono il modello
-	meshVector.resize(num_meshes);		// Faccio il resize di meshVector al numero di mesh che compongono l'oggetto
 
 	for (unsigned int nm = 0; nm < num_meshes; nm++)
 	{

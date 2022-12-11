@@ -13,6 +13,9 @@
 #define UPDATE_DELAY 16u
 #define DELTA_T (float)UPDATE_DELAY / 1000
 
+#define MAX(a, b) ((a) >= (b) ? (a) : (b))
+#define MAX_COMPONENT(v) MAX(MAX((v.x), (v.y)), (v.z))
+
 #define DEBUG_ACTIVE_UNIFORMS
 
 // #define PROJECT_FOLDER "./GLProject-master/"
@@ -47,6 +50,9 @@ Terrain *terrain;
 Mesh *terrainMesh, *ocean, *explorer;
 Mesh *lightSphere;
 Mesh *skybox;
+
+Mesh **selected;
+vector<Mesh **> selectableMeshes;
 
 void drawCallback()
 {
@@ -165,52 +171,49 @@ void keySpUp(int key, int mouseX, int mouseY)
 
 void keyDown(unsigned char key, int x, int y)
 {
-    static int blinn = 1;
-    static int cartoon = 1;
-    static int shades = 5;
-    static int useDirLight = 1;
-    static bool shaderFragment = false;
-
     switch (key)
     {
     case 's':
-        terrainMesh->setShaderProgram(shaderFragment ? "default" : "interp");
-        ocean->setShaderProgram(shaderFragment ? "default" : "interp");
-        explorer->setShaderProgram(shaderFragment ? "default" : "interp");
-
-        shaderFragment = !shaderFragment;
+        if (selected != nullptr)
+        {
+            string prev = (*selected)->getShaderProgram();
+            (*selected)->setShaderProgram(prev == "default" ? "interp" : "default");
+        }
         break;
     case 'l':
-        terrainMesh->setUniformValue(ValueType::V_INT, "useDirLight", Value<int>::of(useDirLight));
-        ocean->setUniformValue(ValueType::V_INT, "useDirLight", Value<int>::of(useDirLight));
-        explorer->setUniformValue(ValueType::V_INT, "useDirLight", Value<int>::of(useDirLight));
-        useDirLight = 1 - useDirLight;
+        if (selected != nullptr)
+        {
+            int prev = (*selected)->getUniformValue<int>("useDirLight");
+            (*selected)->setUniformValue(ValueType::V_INT, "useDirLight", Value<int>::of(1 - prev));
+        }
         break;
     case 'b':
-        terrainMesh->setUniformValue(ValueType::V_INT, "blinn", Value<int>::of(blinn));
-        ocean->setUniformValue(ValueType::V_INT, "blinn", Value<int>::of(blinn));
-        explorer->setUniformValue(ValueType::V_INT, "blinn", Value<int>::of(blinn));
-        blinn = 1 - blinn;
+        if (selected != nullptr)
+        {
+            int prev = (*selected)->getUniformValue<int>("blinn");
+            (*selected)->setUniformValue(ValueType::V_INT, "blinn", Value<int>::of(1 - prev));
+        }
         break;
     case 'c':
-        terrainMesh->setUniformValue(ValueType::V_INT, "cartoon", Value<int>::of(cartoon));
-        ocean->setUniformValue(ValueType::V_INT, "cartoon", Value<int>::of(cartoon));
-        explorer->setUniformValue(ValueType::V_INT, "cartoon", Value<int>::of(cartoon));
-
-        cartoon = 1 - cartoon;
+        if (selected != nullptr)
+        {
+            int prev = (*selected)->getUniformValue<int>("cartoon");
+            (*selected)->setUniformValue(ValueType::V_INT, "cartoon", Value<int>::of(1 - prev));
+        }
         break;
     case '+':
-        shades++;
-        terrainMesh->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(shades));
-        ocean->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(shades));
-        explorer->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(shades));
+        if (selected != nullptr)
+        {
+            int prev = (*selected)->getUniformValue<int>("shades");
+            (*selected)->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(prev + 1));
+        }
         break;
     case '-':
-        if (shades > 2)
-            shades--;
-        terrainMesh->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(shades));
-        ocean->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(shades));
-        explorer->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(shades));
+        if (selected != nullptr)
+        {
+            int prev = (*selected)->getUniformValue<int>("shades");
+            (*selected)->setUniformValue(ValueType::V_INT, "shades", Value<int>::of(MAX(2, prev - 1)));
+        }
         break;
 
     default:
@@ -304,6 +307,7 @@ void createShapes()
     terrainMesh->setUniformValue(ValueType::V_INT, "samplerSurface", Value<int>::of(1));
     terrainMesh->setUniformValue(ValueType::V_FLOAT, "minHeight", Value<float>::of(0.87f));
     terrainMesh->setUniformValue(ValueType::V_FLOAT, "maxHeight", Value<float>::of(1.1f));
+    terrainMesh->setUniformValue(ValueType::V_INT, "selected", Value<int>::of(0));
 
     // terrainMesh->drawWireframe(true);
     scene.addShape(terrainMesh);
@@ -335,6 +339,7 @@ void createShapes()
     ocean->setUniformValue(ValueType::V_FLOAT, "pointLight.linear", Value<float>::of(pointLight.linear));
     ocean->setUniformValue(ValueType::V_FLOAT, "pointLight.quadratic", Value<float>::of(pointLight.quadratic));
     ocean->setUniformValue(ValueType::V_INT, "useTexture", Value<int>::of(0));
+    ocean->setUniformValue(ValueType::V_INT, "selected", Value<int>::of(0));
     // ocean->drawWireframe(true);
     scene.addShape(ocean);
 
@@ -368,16 +373,155 @@ void createShapes()
     explorer->setUniformValue(ValueType::V_FLOAT, "pointLight.linear", Value<float>::of(pointLight.linear));
     explorer->setUniformValue(ValueType::V_FLOAT, "pointLight.quadratic", Value<float>::of(pointLight.quadratic));
     explorer->setUniformValue(ValueType::V_INT, "useTexture", Value<int>::of(0));
+    explorer->setUniformValue(ValueType::V_INT, "selected", Value<int>::of(0));
 
     scene.addShape(explorer);
 
     scene.addShape(skybox);
+
+    selectableMeshes.push_back(&terrainMesh);
+    selectableMeshes.push_back(&explorer);
+}
+
+vec3 get_ray_from_mouse(float mouse_x, float mouse_y)
+{
+    mouse_y = w.getHeight() - mouse_y;
+
+    // mappiamo le coordinate di viewport del mouse [0,width], [0,height] in coordinate normalizzate [-1,1]
+    float x = (2.0f * mouse_x) / w.getWidth() - 1.0;
+    float y = (2.0f * mouse_y) / w.getHeight() - 1.0;
+    float z = 1.0f;
+    vec3 ray_nds = vec3(x, y, z);
+    // Nel clip space hanno coordinate: nota bene la terza coordinata uguale a -1
+    vec4 ray_clip = vec4(x, y, -1.0, 1.0);
+
+    // Le coordinate Nell' eye space si ottengono premoltiplicando per l'inversa della matrice Projection.
+
+    vec4 ray_eye = inverse(projection) * ray_clip;
+
+    // Direzione del raggio
+    ray_eye = vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
+
+    // le coordinate nel world space: si ottengono premoltiplicando per l'inversa della matrice di Vista
+    vec3 ray_wor = vec3(inverse(camera.getView()) * ray_eye);
+
+    ray_wor = normalize(ray_wor);
+
+    return ray_wor;
+}
+
+bool ray_sphere(vec3 ray_origin_wor, vec3 ray_direction_wor, vec3 sphere_centre_wor, float sphere_radius, float *intersection_distance)
+{
+    // Calcoliamo O-C
+    vec3 dist_sfera = ray_origin_wor - sphere_centre_wor;
+    float b = dot(dist_sfera, ray_direction_wor);
+    float cc = dot(dist_sfera, dist_sfera) - sphere_radius * sphere_radius;
+
+    float delta = b * b - cc;
+
+    if (delta < 0) // Il raggio non interseca la sfera
+        return false;
+    // Calcolo i valori di t per cui il raggio interseca la sfera e restituisco il valore dell'intersezione
+    // pi� vicina all'osservatore (la t pi� piccola)
+    if (delta > 0.0f)
+    {
+        // calcola le due intersezioni
+        float t_a = -b + sqrt(delta);
+        float t_b = -b - sqrt(delta);
+        *intersection_distance = t_b;
+
+        // Caso di intersezioni dietro l'osservatore
+        if (t_a < 0.0)
+        {
+            if (t_b < 0)
+                return false;
+        }
+
+        return true;
+    }
+    // Caso in cui il raggio � tangente alla sfera: un interesezione con molteplicit� doppia.
+    if (delta == 0)
+    {
+        float t = -b + sqrt(delta);
+        if (t < 0)
+            return false;
+        *intersection_distance = t;
+        return true;
+    }
+
+    return false;
 }
 
 void mouseFunc(int button, int state, int x, int y)
 {
+    static bool selectOcean = false;
+    static int t = 0;
     lastX = x;
     lastY = y;
+
+    switch (state)
+    {
+    case GLUT_DOWN:
+        t = glutGet(GLUT_ELAPSED_TIME);
+        break;
+    case GLUT_UP:
+        int delta = glutGet(GLUT_ELAPSED_TIME) - t;
+
+        if (delta < 300)
+        {
+            vec3 ray_wor = get_ray_from_mouse(x, y);
+
+            Mesh **prevSelected = selected;
+
+            selected = nullptr;
+            float closest_intersection = INFINITY;
+            for (int i = 0; i < selectableMeshes.size(); i++)
+            {
+                Mesh **m = selectableMeshes[i];
+                float scale = MAX_COMPONENT((*m)->getScaleRelativeToAnchor()) * MAX_COMPONENT((*m)->getScale());
+
+                float t_dist = 0.0f;
+                // Interseco il raggio che esce dalla camera nella direzione del mouse con la sfera centrata nell'ancora di tutti gli oggetti
+                // posizionati nel mondo per individuare se c'� intersezione con l'oggetto
+                if (ray_sphere(camera.getPosition(), ray_wor, (*m)->getWorldPosition(), scale, &t_dist))
+                {
+                    if (selected == nullptr || t_dist < closest_intersection)
+                    {
+                        selected = m;
+                        closest_intersection = t_dist;
+                    }
+                }
+            }
+
+            if (prevSelected != nullptr && prevSelected != selected)
+                (*prevSelected)->setUniformValue(ValueType::V_INT, "selected", Value<int>::of(0));
+
+            if (selected != nullptr)
+            {
+                if ((selected == &terrainMesh || selected == &ocean) && (prevSelected == &terrainMesh || prevSelected == &ocean)) // Checks whether a component of the planet has been selected multiple times in a row.
+                {
+                    if (!selectOcean)
+                    {
+                        selected = &ocean;
+                        terrainMesh->setUniformValue(ValueType::V_INT, "selected", Value<int>::of(0));
+                    }
+                    else
+                    {
+                        selected = &terrainMesh;
+                        ocean->setUniformValue(ValueType::V_INT, "selected", Value<int>::of(0));
+                    }
+
+                    selectOcean = !selectOcean;
+                }
+                else
+                {
+                    selectOcean = false; // The terrain gets selected by default instead of the ocean.
+                }
+
+                (*selected)->setUniformValue(ValueType::V_INT, "selected", Value<int>::of(1));
+            }
+        }
+    }
 }
 
 vec3 getTrackBallPoint(float x, float y)

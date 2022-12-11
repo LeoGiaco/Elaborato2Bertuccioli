@@ -54,6 +54,20 @@ protected:
     virtual void sendUniformValues() = 0;
 
 public:
+    // Returns the value bound to a certain uniform variable.
+    template <typename T>
+    T getUniformValue(string uniformName)
+    {
+        return dynamic_cast<Value<T> *>(get<1>((*(uniformValues.find(uniformName))).second))->get();
+
+        // Expanded version:
+        // auto pair = (*uniformValues.find(uniformName));  // Get first matching element.
+        // ValueBase *vbase = get<1>(pair.second);          // Retrieve the ValueBase object from the tuple within the pair.
+        // Value<T> *val = dynamic_cast<Value<T> *>(vbase); // Cast ValueBase* to the correct type.
+
+        // return val->get();
+    }
+
     // Adds a value to the list of uniform variables to be passed for the shaders.
     void setUniformValue(ValueType valueType, string uniformName, ValueBase *value);
 };

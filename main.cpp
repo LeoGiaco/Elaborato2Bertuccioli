@@ -19,7 +19,6 @@
 
 #define DEBUG_ACTIVE_UNIFORMS
 
-// #define PROJECT_FOLDER "./GLProject-master/"
 #define PROJECT_FOLDER "./"
 
 string vshader = "shaders/3D/vertexShader.glsl";

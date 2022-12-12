@@ -30,14 +30,13 @@ public:
     // Sets the resolution vector for the shader program.
     void setResolution(vec2 res);
 
-    // TODO: metodi per impostare la posizione della/e luci.
-
     // Returns the ID of the shader program.
     GLuint getID();
 
     // Returns the ID for the given uniform variable in the shader program.
     GLint getUniformLocation(string varName);
 
+    // Sends all uniform values to a certain shader instance.
     static void sendUniformValues(map<string, tuple<ValueType, ValueBase *>> *uniformValues, GLProgramInstance *inst);
 };
 

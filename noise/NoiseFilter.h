@@ -26,5 +26,9 @@ protected:
 
 public:
     NoiseFilter();
+
+    /// @brief Evaluates the noise filter.
+    /// @param pos Position of evaluation.
+    /// @param setting Settings of evaluation.
     virtual float evaluate(vec3 pos, NoiseSettings settings) = 0;
 };

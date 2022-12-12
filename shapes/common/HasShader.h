@@ -14,9 +14,9 @@ protected:
     GLProgramInstance *getProgramInstance();
 
 public:
-    // Gets the current shader program name for the shape.
+    // Gets the current shader program name.
     virtual string getShaderProgram();
 
-    // Sets the chosen shader program to be used when drawing the shape.
+    // Sets the shader program.
     virtual void setShaderProgram(string shaderName);
 };

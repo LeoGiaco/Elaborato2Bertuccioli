@@ -9,9 +9,6 @@ Terrain::Terrain(GLProgram *program, Material mat, uint resolution, vector<Noise
 
 float Terrain::getSurfaceHeight(vec3 pointOnUnitSphere)
 {
-    // vec3 origin = mesh->getWorldPosition();
-    // mat4 rot = mat4(1.0) * mat4_cast(mesh->getRotationQuat()) * mat4_cast(mesh->getAnchorRotationQuat()) * mat4_cast(pointRotation);
-
     vec3 rotatedPointOnSphere = pointOnUnitSphere;
     rotatedPointOnSphere = rotate(mesh->getAnchorRotationQuat(), rotatedPointOnSphere);
     rotatedPointOnSphere = rotate(mesh->getRotationQuat(), rotatedPointOnSphere);

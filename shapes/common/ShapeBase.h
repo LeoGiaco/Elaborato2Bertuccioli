@@ -114,6 +114,7 @@ public:
     // Recalculates the model of the shape.
     virtual void calculateModelIfUpdated() = 0;
 
+    // Returns the model matrix of the shape.
     mat4 getModel();
 
     // Returns whether the shape is enabled or not.

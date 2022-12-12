@@ -27,9 +27,6 @@ main.out: ./bin/main.o ./bin/Window.o ./bin/GLProgram.o ./bin/Scene.o ./bin/Came
 ./bin/Terrain.o: ./shapes/3D/Terrain.cpp ./shapes/3D/Terrain.h
 	g++ -c -o ./bin/Terrain.o ./shapes/3D/Terrain.cpp ${FLAGS}
 
-./bin/ComplexShape3D.o: ./shapes/3D/ComplexShape3D.cpp ./shapes/3D/ComplexShape3D.h
-	g++ -c -o ./bin/ComplexShape3D.o ./shapes/3D/ComplexShape3D.cpp ${FLAGS}
-
 ./bin/HasUniformValues.o: ./core/HasUniformValues.cpp ./core/HasUniformValues.h
 	g++ -c -o ./bin/HasUniformValues.o ./core/HasUniformValues.cpp ${FLAGS}
 

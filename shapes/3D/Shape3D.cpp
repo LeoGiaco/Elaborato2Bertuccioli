@@ -70,7 +70,7 @@ quat Shape3D::getRotationQuat()
 
 quat Shape3D::getAnchorRotationQuat()
 {
-    return angleAxis(getAnchorRotationAngle(), getAnchorRotationAxis());
+    return angleAxis(getAnchorRotationAngle(), getAnchorRotationAxis()); // The rotation around the anchor is opposite of the normal rotation.
 }
 
 vec3 Shape3D::getRotationAxis()
@@ -90,7 +90,7 @@ float Shape3D::getRotationAngle()
 
 float Shape3D::getAnchorRotationAngle()
 {
-    return -glm::angle(anchorRotation);
+    return -glm::angle(anchorRotation); // The rotation around the anchor is opposite of the normal rotation.
 }
 
 void Shape3D::setRotation(vec3 axis, float radians)
@@ -101,7 +101,7 @@ void Shape3D::setRotation(vec3 axis, float radians)
 
 void Shape3D::setAnchorRotation(vec3 axis, float radians)
 {
-    anchorRotation = angleAxis(-radians, normalize(axis));
+    anchorRotation = angleAxis(-radians, normalize(axis)); // The rotation around the anchor is opposite of the normal rotation.
     updated = true;
 }
 
@@ -113,7 +113,7 @@ void Shape3D::setRotationAxis(vec3 axis)
 
 void Shape3D::setAnchorRotationAxis(vec3 axis)
 {
-    anchorRotation = angleAxis(getAnchorRotationAngle(), axis);
+    anchorRotation = angleAxis(-getAnchorRotationAngle(), axis);
     updated = true;
 }
 
@@ -160,7 +160,6 @@ void Shape3D::calculateModelIfUpdated()
 void Shape3D::drawInternal()
 {
     if (isCubeMap)
-        // glDepthMask(GL_FALSE);
         glDepthFunc(GL_LEQUAL);
 
     program->useProgram(shapeShaders);
@@ -171,7 +170,6 @@ void Shape3D::drawInternal()
     glBindVertexArray(0);
 
     if (isCubeMap)
-        // glDepthMask(GL_TRUE);
         glDepthFunc(GL_LESS);
 }
 
@@ -385,6 +383,10 @@ Shape3D *Shape3D::cubemap(GLProgram *program, uint cubeMapTextureID)
     return Shape3D::create(program, vertices, normals, indices, vector<vec2>(), empty, GL_TRIANGLES, true, cubeMapTextureID);
 }
 
+/// @brief Checks if a vertex is contained in a vector of vertices.
+/// @param vect The vector of pairs (vertex, index).
+/// @param v The searched vertex.
+/// @return A pair containing a boolean for found/not found and the eventual index of the vertex.
 pair<bool, size_t> find_index(vector<pair<vec3, size_t>> *vect, vec3 v)
 {
     for (size_t i = 0; i < vect->size(); i++)
@@ -432,7 +434,7 @@ void sphere_face(Face face, uint numVertices, vector<vec3> *vertices, vector<pai
             if (j == 0)
             {
                 c2 = -1;
-                isEdge = true;
+                isEdge = true; // Edge vertices are shared, so they are marked.
             }
             else if (j == numVertices - 1)
             {
@@ -446,8 +448,8 @@ void sphere_face(Face face, uint numVertices, vector<vec3> *vertices, vector<pai
 
             if (isEdge)
             {
-                auto in = find_index(edges, v);
-                if (!in.first)
+                auto in = find_index(edges, v); // Checks whether the point is a known edge.
+                if (!in.first)                  // If the point is not known, it gets stored.
                 {
                     edges->push_back(make_pair(v, vertices->size())); // The position of the vector in the vertex array is memorized.
                     quadIndices.push_back(vertices->size());
@@ -513,23 +515,25 @@ Shape3D *Shape3D::sphere_noisy(GLProgram *program, Material mat, uint resolution
         float height = 0;
         for (size_t j = 0; j < settings.size(); j++)
         {
-            height += filter.evaluate(vertices[i], settings[j]);
+            height += filter.evaluate(vertices[i], settings[j]); // Modify the height according to the evaluation with the noise filter.
         }
 
         vertices[i] *= height;
     }
+
+    // Calculation of the normals of each vertex.
     vector<int> normalSums = vector<int>();
     normalSums.assign(normals.size(), 1);
 
     int i1, i2, i3;
-    for (size_t i = 0; i < indices.size(); i += 3)
+    for (size_t i = 0; i < indices.size(); i += 3) // Evaluation of each triangle.
     {
         i1 = indices[i], i2 = indices[i + 1], i3 = indices[i + 2];
 
         vec3 v1 = vertices[i2] - vertices[i1];
         vec3 v2 = vertices[i3] - vertices[i1];
 
-        vec3 triangleNorm = cross(v1, v2);
+        vec3 triangleNorm = cross(v1, v2); // Face normal.
 
         normals[i1] += triangleNorm;
         normals[i2] += triangleNorm;
@@ -542,7 +546,7 @@ Shape3D *Shape3D::sphere_noisy(GLProgram *program, Material mat, uint resolution
 
     for (size_t i = 0; i < normals.size(); i++)
     {
-        normals[i] = normalize(normals[i] / (float)(normalSums[i]));
+        normals[i] = normalize(normals[i] / (float)(normalSums[i])); // Average of the sum of the normals of adjacent vertices.
     }
 
     return Shape3D::create(program, vertices, normals, indices, vector<vec2>(), mat, GL_TRIANGLES);

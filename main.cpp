@@ -479,9 +479,11 @@ void mouseFunc(int button, int state, int x, int y)
     switch (state)
     {
     case GLUT_DOWN:
+        mousePressed = true;
         t = glutGet(GLUT_ELAPSED_TIME);
         break;
     case GLUT_UP:
+        mousePressed = false;
         int delta = glutGet(GLUT_ELAPSED_TIME) - t;
 
         if (delta < 300)
@@ -563,6 +565,9 @@ vec3 getTrackBallPoint(float x, float y)
 
 void mouseActiveMotion(int x, int y)
 {
+    if (!mousePressed)
+        return;
+
     glm::vec3 destination = getTrackBallPoint(x, y);
     glm::vec3 origin = getTrackBallPoint(lastX, lastY);
     float dx, dy, dz;

@@ -1,3 +1,0 @@
-Creare nuovi filtri per il calcolo della superficie (magari)
-Aggiungere mesh importata
-Commentare

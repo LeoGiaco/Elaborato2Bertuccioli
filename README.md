@@ -13,8 +13,8 @@
         <ul>
             <li>Creare un nuovo progetto vuoto in C++ e inserire la cartella scaricata nella cartella interna del progetto (quella allo stesso livello del file .sln);</li>
             <li>Installare tramite la "Console di gestione pacchetti Nuget" i pacchetti "nupengl.core" e "glm" (comando "install-package");</li>
-            <li>Assicurarsi di avere installate le librerie per assimp (vedi Virtuale)</li>
-            <li>Nelle impostazioni di progetto, includere la libreria <strong>"assimp-vc142-mt.lib"</strong> e impostare la versione di compilazione <strong>c++17</strong></li>
+            <li>Assicurarsi di avere installate le librerie per assimp (vedi Virtuale);</li>
+            <li>Nelle impostazioni di progetto, includere la libreria <strong>"assimp-vc142-mt.lib"</strong> e impostare la versione di compilazione <strong>c++17</strong>;</li>
             <li>Aggiungere tutti i file .h, .hpp e .cpp al progetto dalla barra laterale "Esplora soluzioni", cliccando rispettivamente su "File di intestazione" per i file .h e "File di origine" per i file .cpp (tasto destro -> Aggiungi -> Elemento esistente);</li>
             <li>Aprire il file "main.cpp" dentro la cartella e modificare la macro "PROJECT_FOLDER" con il nome della cartella scaricata seguito da "/";</li>
             <li>Lanciare in esecuzione il progetto tramite Visual Studio.</li>
@@ -34,5 +34,5 @@
     <li><strong>Tasto 'l'</strong> per cambiare tra modello di illuminazione phong e modello di illuminazione blinn-phong;</li>
     <li><strong>Tasto 'b'</strong> per attivare/disattivare lo shader cartoon;</li>
     <li><strong>Tasto 'c'</strong> per attivare/disattivare lo shader cartoon;</li>
-    <li><strong>Tasti '+' e '-'</strong> per aumentare/diminuire il numero di bande di luminosità per lo shader cartoon;</li>
+    <li><strong>Tasti '+' e '-'</strong> per aumentare/diminuire il numero di bande di luminosità per lo shader cartoon.</li>
 </ul>

@@ -9,7 +9,7 @@
 
 // VERSIONE CPP 17 x64
 
-#define WINDOW_WIDTH 800
+#define WINDOW_WIDTH 1200
 #define WINDOW_HEIGHT 800
 #define UPDATE_DELAY 16u
 #define DELTA_T (float)UPDATE_DELAY / 1000
